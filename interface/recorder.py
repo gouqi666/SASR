@@ -50,10 +50,12 @@ class AudioRecorderWithAutoStop:
         stream.stop_stream()
         stream.close()
         p.terminate()
+        res = np.concatenate(self.audio)
+        self.audio.clear()
         if return_silence_tail:
-            return np.concatenate(self.audio)
+            return res
         else:
-            return np.concatenate(self.audio)[:-self.s.chunks_threshold * audio_config['frames_per_buffer']]
+            return res[:-self.s.chunks_threshold * audio_config['frames_per_buffer']]
 
 
 if __name__ == '__main__':
