@@ -1,12 +1,8 @@
-import time
-
-import pyaudio
-import wave
-from config import audio_config, stop_config
 import numpy as np
-import librosa
-import matplotlib.pyplot as plt
+import pyaudio
 import simpleaudio
+
+from config import audio_config, stop_config
 
 
 def STE(curFrame):
