@@ -6,23 +6,43 @@ from config import audio_config, stop_config
 import numpy as np
 import librosa
 import matplotlib.pyplot as plt
+import simpleaudio
+
+
+def STE(curFrame):
+    # 短时能量
+    amp = np.sum(np.abs(curFrame))
+    return amp
 
 
 class SilenceDetector:
     def __init__(self):
+        self.status = -1  # 0为未开始，1为正在录音，2为录音结束
+        self.status_name = ['等待发音', '正在录音', '录音结束']
         self.chunks_threshold = int(np.ceil(audio_config['rate'] / audio_config['frames_per_buffer']
                                             * stop_config['SILENCE_THRESHOLD_SEC']))
         self.silence_count = 0
+        self.switchStatus()
 
     @staticmethod
     def checkSilence(audio):
-        return np.max(np.abs(audio)) < stop_config["SILENCE_THRESHOLD"]
+        return STE(audio) < stop_config["SILENCE_THRESHOLD"]
+
+    def switchStatus(self):
+        self.status += 1
+        print(self.status_name[self.status])
 
     def stop(self, audio):
         if self.checkSilence(audio):
-            self.silence_count += 1
+            if self.status == 1:
+                self.silence_count += 1
         else:
-            self.silence_count = 0
+            if self.status == 0:
+                self.switchStatus()
+            else:
+                self.silence_count = 0
+        if self.silence_count >= self.chunks_threshold:
+            self.switchStatus()
         return self.silence_count >= self.chunks_threshold
 
 
@@ -59,4 +79,7 @@ class AudioRecorderWithAutoStop:
 
 
 if __name__ == '__main__':
-    print(AudioRecorderWithAutoStop().record().shape)
+    _audio = AudioRecorderWithAutoStop().record(True)
+    print(_audio.shape)
+    obj = simpleaudio.play_buffer(_audio, sample_rate=16000, num_channels=1, bytes_per_sample=4)
+    obj.wait_done()

@@ -10,7 +10,7 @@ audio_config = {
 
 stop_config = {
     # 静音多少秒停止
-    "SILENCE_THRESHOLD_SEC": 1,
-    # 多小声算静音
-    "SILENCE_THRESHOLD": 0.5
+    "SILENCE_THRESHOLD_SEC": 2,
+    # 多小声算静音，我这里底噪太大了，所以设置的比较高
+    "SILENCE_THRESHOLD": 60
 }
