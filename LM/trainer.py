@@ -51,7 +51,7 @@ class LMTrainer:
         with torch.cuda.device("cuda:0"):
             self.model = self.model.cuda()
 
-            optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-4, momentum=0.9)
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-4)
 
             scheduler = StepLR(optimizer, step_size=25, gamma=0.8)
 
@@ -75,11 +75,12 @@ class LMTrainer:
                         output_classes, features = self.model(x, mask)
                         class_loss = cross_entropy_loss(output_classes, y, mask)
                         acc = metrics(output_classes, y, mask)
-                        feature_loss = bert_feature_loss(features, bert_feature, mask)
+                        # feature_loss = bert_feature_loss(features, bert_feature, mask)
+                        feature_loss = 0
                         loss = class_loss + feature_loss
                         loss.backward()
                         optimizer.step()
-                        train_loss.append(loss)
+                        train_loss.append(loss.item())
                         bar.set_postfix(train_loss=loss, acc=acc)
                         bar.update(1)
                     train_loss = np.mean(train_loss)
@@ -94,7 +95,7 @@ class LMTrainer:
                     class_loss = cross_entropy_loss(output_classes, y, mask)
                     feature_loss = bert_feature_loss(features, bert_feature, mask)
                     loss = class_loss + feature_loss
-                    valid_loss.append(loss)
+                    valid_loss.append(loss.item())
                 valid_loss = np.mean(valid_loss)
 
                 scheduler.step()
