@@ -1,4 +1,5 @@
 import torch
+import transformers
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -27,8 +28,8 @@ def collate_fn(train_data):
     y = pad_sequence(y, batch_first=True, padding_value=0).int()
     bert_token = pad_sequence(bert_token, batch_first=True, padding_value=0).int()
     mask = torch.eq(x, 0)
-    bert_feature = bert_model.forward(bert_token.cuda(), attention_mask=torch.logical_not(mask).int().cuda())
-    train_data = (x, y, bert_feature[0])
+    # bert_feature = bert_model.forward(bert_token.cuda(), attention_mask=torch.logical_not(mask).int().cuda())
+    train_data = (x, y)
     return train_data, mask
 
 
@@ -52,8 +53,12 @@ class LMTrainer:
             self.model = self.model.cuda()
 
             optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-4)
-
-            scheduler = StepLR(optimizer, step_size=25, gamma=0.8)
+            warm_up_ratio = 0.1
+            warm_up_steps = int(self.epoch * len(self.train_data) * warm_up_ratio)
+            train_steps = int(self.epoch * len(self.train_data) * (1 - warm_up_ratio))
+            scheduler = transformers.get_linear_schedule_with_warmup(optimizer,
+                                                                     num_warmup_steps=warm_up_steps,
+                                                                     num_training_steps=train_steps)
 
             bert_feature_loss = BertFeatureLoss()
             cross_entropy_loss = LMCrossEntropyLoss()
@@ -69,8 +74,8 @@ class LMTrainer:
                 print("epoch:{}".format(epoch))
                 with tqdm(total=len(self.train_data)) as bar:
                     for i, batch in enumerate(self.train_data):
-                        (x, y, bert_feature), mask = batch
-                        x, y, bert_feature, mask = x.cuda(), y.cuda(), bert_feature.cuda(), mask.cuda()
+                        (x, y), mask = batch
+                        x, y, mask = x.cuda(), y.cuda(), mask.cuda()
                         optimizer.zero_grad()
                         output_classes, features = self.model(x, mask)
                         class_loss = cross_entropy_loss(output_classes, y, mask)
@@ -83,39 +88,59 @@ class LMTrainer:
                         train_loss.append(loss.item())
                         bar.set_postfix(train_loss=loss, acc=acc)
                         bar.update(1)
+                        scheduler.step()
                     train_loss = np.mean(train_loss)
 
                 valid_loss = []
+                accs = []
                 self.model.eval()  # 注意model的模式从train()变成了eval()
                 for i, batch in enumerate(tqdm(self.valid_data)):
-                    (x, y, bert_feature), mask = batch
-                    x, y, bert_feature, mask = x.cuda(), y.cuda(), bert_feature.cuda(), mask.cuda()
+                    (x, y), mask = batch
+                    x, y, mask = x.cuda(), y.cuda(), mask.cuda()
                     # output_classes, features = self.model(x.cuda(), mask.cuda())
                     output_classes, features = self.model(x, mask)
                     class_loss = cross_entropy_loss(output_classes, y, mask)
-                    feature_loss = bert_feature_loss(features, bert_feature, mask)
+                    acc = metrics(output_classes, y, mask)
+                    # feature_loss = bert_feature_loss(features, bert_feature, mask)
+                    feature_loss = 0
                     loss = class_loss + feature_loss
                     valid_loss.append(loss.item())
+                    accs.append(acc.item())
                 valid_loss = np.mean(valid_loss)
+                acc = np.mean(accs)
 
-                scheduler.step()
+                print("train loss: {} valid loss: {} acc: {}".format(train_loss, valid_loss, acc))
 
-                print("valid loss: {}".format(valid_loss))
+                torch.save(
+                    {'epoch': epoch,
+                     'state_dict': self.model.state_dict(),
+                     'optimizer': optimizer.state_dict()},
+                    self.save_path)
+                print("模型已保存")
 
-                if (epoch + 1) % 10 == 0 or (epoch + 1) == self.epoch:  # 保存模型
-                    torch.save(
-                        {'epoch': epoch,
-                         'state_dict': self.model.module.state_dict(),
-                         'optimizer': optimizer.state_dict()},
-                        self.save_path)
+    def predict(self, data, load=True):
+        if load:
+            self.model = self.restore_from(self.model)
+        if len(data) > 0 and isinstance(data[0], str):
+            data = [data]
+        sentence = []
+        for one_data in data:
+            pinyin_token = torch.tensor([am_features.encode(one_data)])
+            out_classes, _ = self.model(pinyin_token)
+            words = lm_features.decode(torch.argmax(out_classes, -1).numpy()[0])
+            sentence.append(words)
+        return sentence
 
-    @staticmethod
-    def restore_from(model, optimizer, ckpt_path):
+    def restore_from(self, model, optimizer=None, ckpt_path=None):
+        if ckpt_path is None:
+            ckpt_path = self.save_path
         device = torch.cuda.current_device()
         ckpt = torch.load(ckpt_path, map_location=lambda storage, loc: storage.cuda(device))
         epoch = ckpt['epoch']
-        ckpt_model_dict = remove_prefix(ckpt['state_dict'], 'module.')
+        ckpt_model_dict = ckpt['state_dict']
         model.load_state_dict(ckpt_model_dict, strict=False)  # load model
-        optimizer.load_state_dict(ckpt['optimizer'])  # load optimizer
-
-        return model, optimizer, epoch
+        if optimizer:
+            optimizer.load_state_dict(ckpt['optimizer'])  # load optimizer
+            return model, optimizer, epoch
+        else:
+            return model

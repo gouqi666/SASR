@@ -58,7 +58,7 @@ class TextFeaturizer:
         return res
 
     def decode(self, tokens):
-        return [self.token2word[token] for token in tokens]
+        return [self.token2word[token] for token in tokens][1:-1]
 
 
 if __name__ == '__main__':
