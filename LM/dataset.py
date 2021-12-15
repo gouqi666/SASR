@@ -28,7 +28,7 @@ class LMDataSet(data.Dataset):
         y = ''.join(y)
         x = pinyin(self.dataset[item])
         x = [item[0] for item in x]
-        return self.amf.encode(x), self.lmf.encode(y), bert_tokenizer.encode(y)
+        return self.amf.encode(x), self.lmf.encode(y)
 
     def __len__(self):
         return len(self.dataset)

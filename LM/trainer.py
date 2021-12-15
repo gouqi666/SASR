@@ -23,10 +23,10 @@ def collate_fn(train_data):
     train_data.sort(key=lambda data: len(data[0]), reverse=True)
     x = [torch.Tensor(item[0]) for item in train_data]
     y = [torch.Tensor(item[1]) for item in train_data]
-    bert_token = [torch.Tensor(item[2]) for item in train_data]
+    # bert_token = [torch.Tensor(item[2]) for item in train_data]
     x = pad_sequence(x, batch_first=True, padding_value=0).int()
     y = pad_sequence(y, batch_first=True, padding_value=0).int()
-    bert_token = pad_sequence(bert_token, batch_first=True, padding_value=0).int()
+    # bert_token = pad_sequence(bert_token, batch_first=True, padding_value=0).int()
     mask = torch.eq(x, 0)
     # bert_feature = bert_model.forward(bert_token.cuda(), attention_mask=torch.logical_not(mask).int().cuda())
     train_data = (x, y)
