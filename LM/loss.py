@@ -22,7 +22,7 @@ class LMCrossEntropyLoss(nn.Module):
         out_classes = out_classes.view(out_classes.shape[0] * out_classes.shape[1], -1).contiguous()
         masks = torch.logical_not(masks.view(-1, 1).contiguous())
         target_classes = target_classes.view(-1).contiguous()
-        return torch.mean(self.criterion(out_classes, target_classes.view(-1).long()) * masks)
+        return torch.sum(self.criterion(out_classes, target_classes.view(-1).long()) * masks.view(-1)) / torch.sum(masks)
 
 
 class LMAccuracy(nn.Module):
