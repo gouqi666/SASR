@@ -21,7 +21,7 @@ class TextFeaturizer:
                 else:
                     break
             self.word2token["[UNS]"] = len(lines)
-            self.token2word[len(lines)] = "UNS"
+            self.token2word[len(lines)] = "[UNS]"
 
     @property
     def unknown_token(self):

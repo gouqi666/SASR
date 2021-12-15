@@ -12,7 +12,7 @@ preprocess_config = {
 
 training_config = {
     "epoch": 20,
-    "batch_size": 32,
+    "batch_size": 16,
     "shuffle": True,
     "save_path": file_path + "/lm_model"
 }
