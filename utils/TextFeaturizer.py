@@ -20,8 +20,9 @@ class TextFeaturizer:
                     self.token2word[idx + 1] = line
                 else:
                     break
-            self.word2token["[UNS]"] = len(lines) + 1
-            self.token2word[len(lines) + 1] = "UNS"
+            self.word2token["[UNS]"] = len(lines)
+            self.token2word[len(lines)] = "UNS"
+
     @property
     def unknown_token(self):
         return self.word2token["[UNS]"]
@@ -62,4 +63,3 @@ class TextFeaturizer:
 
 if __name__ == '__main__':
     print(TextFeaturizer(lm_token_path).encode("我是大帅哥"))
-
