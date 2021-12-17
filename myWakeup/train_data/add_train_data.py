@@ -1,5 +1,5 @@
 import pyaudio,wave
-from utils import wavfile_to_mfccs,normalize_mean
+from utils.wakeup import wavfile_to_mfccs,normalize_mean
 import numpy as np
 import glob
 import argparse
@@ -43,7 +43,7 @@ if __name__ == "__main__":
             wf.writeframes(b''.join(record_buf))
             wf.close()
             count += 1
-            is_start = input("can we start next record?")
+            is_start = input("can we start next record?(y or n)")
             while is_start[0] != 'y':  # y means ok
                 is_start = input("can we start next record?")
     else:
