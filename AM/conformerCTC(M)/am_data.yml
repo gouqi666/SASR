@@ -26,7 +26,7 @@ speech_config:
 
 
 decoder_config:
-  vocabulary: './AMmodel/am_tokens.txt'
+  vocabulary: 'AM/AMmodel/am_tokens.txt'
   blank_at_zero: False
   beam_width: 1
 
@@ -66,7 +66,7 @@ learning_config:
     train_steps_per_batches: 10
     eval_steps_per_batches: 10
     num_epochs: 50
-    outdir: './conformerCTC(M)'
+    outdir: 'AM/conformerCTC(M)'
     log_interval_steps: 300
     eval_interval_steps: 500
     save_interval_steps: 500

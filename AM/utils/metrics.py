@@ -1,8 +1,8 @@
 
 import numpy as np
 import tensorflow as tf
-from utils.xer import wer
-from utils.tools import bytes_to_string
+from ..utils.xer import wer
+from ..utils.tools import bytes_to_string
 
 
 def wer(decode: np.ndarray, target: np.ndarray) -> (tf.Tensor, tf.Tensor):

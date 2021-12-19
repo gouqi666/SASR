@@ -1,7 +1,7 @@
 import numpy as np
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Layer
-from AMmodel.layers import backend, backend_keras
+from ...AMmodel.layers import backend, backend_keras
 import tensorflow as tf
 
 class Spectrogram(Layer):

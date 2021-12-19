@@ -2,7 +2,7 @@
 import yaml
 from collections import UserDict
 
-from utils.tools import preprocess_paths, append_default_keys_dict, check_key_in_dict
+from ..utils.tools import preprocess_paths, append_default_keys_dict, check_key_in_dict
 
 
 def load_yaml(path):

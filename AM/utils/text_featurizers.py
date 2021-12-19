@@ -1,7 +1,6 @@
-
 import codecs
 import tensorflow as tf
-from utils.tools import preprocess_paths
+from ..utils.tools import preprocess_paths
 
 
 class TextFeaturizer:
@@ -11,7 +10,7 @@ class TextFeaturizer:
     converted to a sequence of integer indexes.
     """
 
-    def __init__(self, decoder_config: dict,show=False):
+    def __init__(self, decoder_config: dict, show=False):
         """
         decoder_config = {
             "vocabulary": str,
@@ -66,28 +65,32 @@ class TextFeaturizer:
             self.tf_vocab_array = tf.concat([self.tf_vocab_array, [""]], axis=0)
             self.index_to_unicode_points = tf.concat(
                 [self.index_to_unicode_points, [0]], axis=0)
-        if self.decoder_config['model_type']=='Transducer':
-            self.stop=self.endid()
-            self.pad=self.blank
-            self.start=self.startid()
+        if self.decoder_config['model_type'] == 'Transducer':
+            self.stop = self.endid()
+            self.pad = self.blank
+            self.start = self.startid()
         elif self.decoder_config['model_type'] == 'LAS':
             self.stop = self.endid()
             self.pad = 0
             self.start = self.startid()
-        elif self.decoder_config['model_type']=='LM':
+        elif self.decoder_config['model_type'] == 'LM':
             self.stop = self.endid()
             self.pad = 0
             self.start = self.startid()
         else:
-            self.pad=0
-            self.stop=-1
+            self.pad = 0
+            self.stop = -1
+
     def add_scorer(self, scorer: any = None):
         """ Add scorer to this instance, scorer can use decoder_config property """
         self.scorer = scorer
+
     def startid(self):
         return self.token_to_index['<S>']
+
     def endid(self):
         return self.token_to_index['</S>']
+
     def prepand_blank(self, text: tf.Tensor) -> tf.Tensor:
         """ Prepand blank index for transducer models """
         return tf.concat([[self.blank], text], axis=0)
@@ -106,12 +109,12 @@ class TextFeaturizer:
         #     if tok in self.vocab_array:
         #         new_tokens.append(tok)
         # tokens = new_tokens
-        if self.decoder_config['model_type']=='CTC':
+        if self.decoder_config['model_type'] == 'CTC':
             feats = [self.token_to_index[token] for token in tokens]
-        elif self.decoder_config['model_type']=='LAS':
+        elif self.decoder_config['model_type'] == 'LAS':
             feats = [self.token_to_index[token] for token in tokens] + [self.stop]
         else:
-            feats=[self.start]+[self.token_to_index[token] for token in tokens]
+            feats = [self.start] + [self.token_to_index[token] for token in tokens]
         return feats
 
     @tf.function
@@ -132,11 +135,10 @@ class TextFeaturizer:
             # print(feat)
             return tf.map_fn(self._idx_to_char, feat, dtype=tf.string)
 
-
     def _idx_to_char(self, arr: tf.Tensor) -> tf.Tensor:
         transcript = tf.constant("", dtype=tf.string)
         for i in arr:
-            transcript = tf.strings.join([transcript, self.tf_vocab_array[i]],separator=' ')
+            transcript = tf.strings.join([transcript, self.tf_vocab_array[i]], separator=' ')
         return transcript
 
         # arr = arr[arr != self.blank]
@@ -164,21 +166,26 @@ class TextFeaturizer:
             def map_fn(arr):
                 def sub_map_fn(index):
                     return self.index_to_unicode_points[index]
+
                 return tf.map_fn(sub_map_fn, arr, dtype=tf.int32
                                  )
+
             # filter -1 value to avoid outofrange
             minus_one = -1 * tf.ones_like(feat, dtype=tf.int32)
             blank_like = self.blank * tf.ones_like(feat, dtype=tf.int32)
             feat = tf.where(feat == minus_one, blank_like, feat)
             return tf.map_fn(map_fn, feat, dtype=tf.int32,
-                           )
+                             )
+
+
 if __name__ == '__main__':
     from utils.user_config import UserConfig
     import pypinyin
     import numpy as np
-    config=UserConfig('../config.yml','../config.yml',False)
+
+    config = UserConfig('../config.yml', '../config.yml', False)
     print(config)
-    test=TextFeaturizer(config['decoder_config'])
-    print(test.num_classes,test.vocab_array)
+    test = TextFeaturizer(config['decoder_config'])
+    print(test.num_classes, test.vocab_array)
     # print(test.extract(pypinyin.lazy_pinyin('我爱你',1)))
-    print(test.iextract(tf.constant(np.random.random([4,test.num_classes]))))
+    print(test.iextract(tf.constant(np.random.random([4, test.num_classes]))))

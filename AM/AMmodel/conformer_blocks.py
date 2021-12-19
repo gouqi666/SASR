@@ -1,10 +1,10 @@
-
 import tensorflow as tf
-from AMmodel.wav_model import WavePickModel
+from ..AMmodel.wav_model import WavePickModel
 
-from utils.tools import merge_two_last_dims
-from AMmodel.layers.switchnorm import SwitchNormalization
-from AMmodel.layers.multihead_attention import MultiHeadAttention
+from ..utils.tools import merge_two_last_dims
+from ..AMmodel.layers.switchnorm import SwitchNormalization
+from ..AMmodel.layers.multihead_attention import MultiHeadAttention
+
 
 class GLU(tf.keras.layers.Layer):
     def __init__(self,
@@ -23,6 +23,7 @@ class GLU(tf.keras.layers.Layer):
         conf = super(GLU, self).get_config()
         conf.update({"axis": self.axis})
         return conf
+
 
 class ConvSubsampling(tf.keras.layers.Layer):
     def __init__(self,
@@ -157,7 +158,7 @@ class ConvModule(tf.keras.layers.Layer):
             filters=2 * input_dim, kernel_size=kernel_size, strides=1,
             padding="same", depth_multiplier=1, name="dw_conv"
         )
-        self.bn =SwitchNormalization()
+        self.bn = SwitchNormalization()
         self.swish = tf.keras.layers.Activation(
             tf.keras.activations.swish, name="swish_activation")
         self.pw_conv_2 = tf.keras.layers.Conv1D(filters=input_dim, kernel_size=1, strides=1,
@@ -249,14 +250,14 @@ class ConformerEncoder(tf.keras.Model):
                  name="conformer_encoder",
                  **kwargs):
         super(ConformerEncoder, self).__init__(name=name, **kwargs)
-        self.dmodel=dmodel
-        self.num_heads=num_heads
-        self.fc_factor=fc_factor
-        self.dropout=dropout
-        self.head_size=head_size
-        self.hop_size=hop_size
+        self.dmodel = dmodel
+        self.num_heads = num_heads
+        self.fc_factor = fc_factor
+        self.dropout = dropout
+        self.head_size = head_size
+        self.hop_size = hop_size
         self.add_wav_info = add_wav_info
-        self.reduction_factor=reduction_factor
+        self.reduction_factor = reduction_factor
         self.conv_subsampling = ConvSubsampling(
             odim=dmodel, reduction_factor=reduction_factor,
             dropout=dropout
@@ -264,7 +265,7 @@ class ConformerEncoder(tf.keras.Model):
         self.conformer_blocks = []
 
         if self.add_wav_info:
-            self.wav_layer=WavePickModel(dmodel,hop_size)
+            self.wav_layer = WavePickModel(dmodel, hop_size)
         for i in range(num_blocks):
             conformer_block = ConformerBlock(
                 input_dim=dmodel,
@@ -284,10 +285,10 @@ class ConformerEncoder(tf.keras.Model):
             mel_inputs, wav_inputs = inputs
             mel_outputs = self.conv_subsampling(mel_inputs, training=training)
             wav_outputs = self.wav_layer(wav_inputs, training=training)
-            outputs = mel_outputs+wav_outputs
+            outputs = mel_outputs + wav_outputs
         else:
             outputs = self.conv_subsampling(inputs, training=training)
-        encoder_outputs=[]
+        encoder_outputs = []
         for cblock in self.conformer_blocks:
             outputs = cblock(outputs, training=training)
             encoder_outputs.append(outputs)
