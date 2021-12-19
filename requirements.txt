@@ -1,0 +1,16 @@
+pypinyin==0.35.0
+SoundFile==0.10.3.post1
+librosa==0.8.1
+simpleaudio==1.0.4
+tqdm==4.56.0
+numpy==1.19.5
+matplotlib==3.3.2
+transformers==4.13.0
+PyAudio==0.2.11
+PyYAML==6.0
+scikit_learn==1.0.1
+
+typing~=3.7.4.3
+sklearn~=0.0
+scikit-learn~=1.0.1
+Flask~=1.0

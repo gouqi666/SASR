@@ -1,12 +1,9 @@
-import torch
+from pypinyin import pinyin
 from torch.utils import data
-from torch.utils.data import Sampler
-import numpy as np
-from .bert import bert_model, bert_tokenizer
+
+# from .bert import bert_model, bert_tokenizer
 from utils import TextFeaturizer
 from .config import train_path, eval_path
-from pypinyin import pinyin
-from torch.nn.utils.rnn import pack_padded_sequence
 
 
 class LMDataSet(data.Dataset):

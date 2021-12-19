@@ -1,19 +1,16 @@
+import numpy as np
 import torch
 import transformers
-from torch.optim.lr_scheduler import StepLR
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import BertModel
-from transformers.models.marian.convert_marian_to_pytorch import remove_prefix
-from .loss import BertFeatureLoss, LMCrossEntropyLoss, LMAccuracy
-from .bert import bert_model, bert_tokenizer
-from .dataset import LMDataSet
+
 from utils import lm_token_path, am_token_path, TextFeaturizer
 from .config import training_config
-from torch.nn.utils.rnn import pad_sequence
+# from .bert import bert_model, bert_tokenizer
+from .dataset import LMDataSet
+from .loss import BertFeatureLoss, LMCrossEntropyLoss, LMAccuracy
 from .model import Transformer
-import numpy as np
-from torch.nn import CrossEntropyLoss
 
 am_features = TextFeaturizer(am_token_path)
 lm_features = TextFeaturizer(lm_token_path)
@@ -46,6 +43,7 @@ class LMTrainer:
         self.model = Transformer(self.amf, self.lmf)
         self.save_path = training_config["save_path"]
         self.epoch = training_config["epoch"]
+        self.loaded = False
 
     def train(self, resume=True):
         # print(torch.cuda.current_device())
@@ -66,6 +64,7 @@ class LMTrainer:
 
             if resume:  # restore from checkpoint
                 self.model, optimizer, epoch = self.restore_from(self.model, optimizer, self.save_path)
+                self.loaded = True
 
             for epoch in range(self.epoch):
 
@@ -119,8 +118,9 @@ class LMTrainer:
                 print("模型已保存")
 
     def predict(self, data, load=True):
-        if load:
+        if load and not self.loaded:
             self.model = self.restore_from(self.model)
+            self.loaded = True
         if len(data) > 0 and isinstance(data[0], str):
             data = [data]
         sentence = []
@@ -134,8 +134,8 @@ class LMTrainer:
     def restore_from(self, model, optimizer=None, ckpt_path=None):
         if ckpt_path is None:
             ckpt_path = self.save_path
-        device = torch.cuda.current_device()
-        ckpt = torch.load(ckpt_path, map_location=lambda storage, loc: storage.cuda(device))
+        # device = torch.cuda.current_device()
+        ckpt = torch.load(ckpt_path, map_location=torch.device('cpu'))
         epoch = ckpt['epoch']
         ckpt_model_dict = ckpt['state_dict']
         model.load_state_dict(ckpt_model_dict, strict=False)  # load model
