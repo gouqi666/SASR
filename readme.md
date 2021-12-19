@@ -1,0 +1,1 @@
+- AM infer 需要先下一个[AM模型](pan.baidu.com/s/1NPk17DUr0-lBgwCkC5dFuQ)(密码：7qmd)放置在conformerCTC(M)中

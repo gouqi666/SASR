@@ -2,3 +2,5 @@
 *.wav
 *.pt
 ChineseBERT-base
+*.h5
+.h5
