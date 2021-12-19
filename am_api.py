@@ -13,9 +13,10 @@ def parseAudio():
     file = request.files.get('wav')
     filepath = os.path.join("tmp", file.filename)
     file.save(filepath)
+    answer = speech2pinyin(filepath)
     os.remove(filepath)
-    return {"pinyin": speech2pinyin(filepath)}
+    return {"pinyin": answer}
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=6000, debug=False)
