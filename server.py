@@ -1,5 +1,6 @@
 import os.path
-
+from AM.api import speech2pinyin
+from LM.api import pinyin2text
 from flask import Flask, request
 import requests
 
@@ -11,11 +12,15 @@ def speech2text():
     audio = request.files.get("audio")
     file_path = os.path.join("cache", audio.filename)
     audio.save(file_path)
-    pinyin = requests.post("http://localhost:6000/audio", files={"wav": open(file_path, 'rb')}).json()[
-        'pinyin']
-    text = requests.post("http://localhost:6001/text", data={"pinyin": str(pinyin)}).json()['text']
+    text = pinyin2text(speech2pinyin(file_path))
+    os.remove(file_path)
     return {"data": text}
 
 
+@app.route("/hello")
+def hello():
+    return "hello"
+
+
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=9108, debug=True)
+    app.run(host="0.0.0.0", port=9108, debug=False)
